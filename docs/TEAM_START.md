@@ -113,6 +113,3 @@ Ahmed and Muhammad review identity/course/enrollment interfaces early to avoid m
 6. Protect Ahmed's capacity. Rotate routine release checks and reporting; owners fix their own feature failures. Do not silently take over unfinished features.
 7. First complete: instructor creates course → student joins → assignment published → submission → feedback → student sees result. AI, email, calendar grid, and extra polish wait.
 
-## Next checkpoint
-
-Everyone runs the same committed starter and demonstrates their first small PR. Ahmed demonstrates session behavior; Muhammad the list; Salman the form; Aya navigation/dashboard. Review response contracts and assign the next connected slices from [BACKLOG.md](BACKLOG.md). Use [ARCHITECTURE.md](ARCHITECTURE.md) for schema/access agreements and [LEADERSHIP.md](LEADERSHIP.md) for the meeting/review rhythm. Confirm dates rather than assuming the earlier six-week proposal is the actual deadline.
