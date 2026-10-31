@@ -1,6 +1,8 @@
 'use client'; 
+import { Button } from '@/components/ui/Button';
 import { createClient } from '@/lib/supabase/client'
 import { useState, Suspense } from 'react'
+import Link from 'next/link';
 
 
 function SignupForm() {
@@ -36,8 +38,8 @@ function SignupForm() {
     }
 if (sent) return <p>check your email for confirmation link</p>
     return (
-        <main>
-            <p>Sign Up</p>
+        <div className="w-full max-w-md bg-white rounded-2xl shadow-xl border p-8 space-y-4">
+            <h1>Sign Up</h1>
             <form onSubmit={handleSubmit}>
                 <input
                 type="email"
@@ -60,11 +62,14 @@ if (sent) return <p>check your email for confirmation link</p>
                 onChange={(e) => setName(e.target.value)}
                 required/>
                 {error && <p>{error}</p>}
-                <button type="submit" disabled={loading}>
+                <p className="text-sm text-gray-600"> Already Have an Account?{' '}
+                    <Link href="/login" className="text-sm text-blue-600 hover:underline">Bakc to Login</Link>
+                </p>
+                <Button type="submit" disabled={loading}>
                 {loading ? 'Singing Up' : 'Sign Up'}
-                </button>
+                </Button>
             </form>
-        </main>
+        </div>
     )
 
 }

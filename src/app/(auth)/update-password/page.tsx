@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { Button } from '@/components/ui/Button';
 
 
 export default function UpdatePassword() {
@@ -28,16 +29,16 @@ export default function UpdatePassword() {
     }
 
 return (
-  <main>
+  <div className="w-full max-w-md bg-white rounded-2xl shadow-xl border p-8 space-y-4">
     <h1>Update Password</h1>
     <form onSubmit={handleSubmit}>
         <input type="password" placeholder ="New password" value = {password}
         onChange={(e) => setPassword(e.target.value)} required />
       {error && <p>{error}</p>}
-      <button type="submit" disabled={loading}>
+      <Button type="submit" disabled={loading}>
         {loading ? 'Updating...' : 'Update Password'}
-      </button>
+      </Button>
     </form>
-  </main>
+  </div>
 )
 }

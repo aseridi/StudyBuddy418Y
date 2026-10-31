@@ -4,8 +4,9 @@ import { useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { AlertCircle } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
-
-
+import { Button } from '@/components/ui/Button'
+import { Input } from '@/components/ui/Input';
+import Link from 'next/link';
 
 function LoginForm() {
     const searchParams = useSearchParams()
@@ -31,29 +32,33 @@ function LoginForm() {
         window.location.href = redirectTo 
     }
     return (
-    <main>
+    <div className="w-full max-w-md bg-white rounded-2xl shadow-xl border p-8 space-y-4">
       <h1>Log in</h1>
       <form onSubmit={handleSubmit}>
-        <input
+        <Input
           type="email"
           placeholder="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
         />
-        <input
+        <Input
           type="password"
           placeholder="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
         />
+        <Link href="/reset-password" className="text-sm text-blue-600 hover:underline">Forgot Password?</Link>
         {error && <p>{error}</p>}
-        <button type="submit" disabled={loading}>
+        <Button type="submit" disabled={loading}>
           {loading ? 'Logging in…' : 'Log in'}
-        </button>
+        </Button>
       </form>
-    </main>
+      <p className ="text-sm text-gray-600"> Don&apos;t have an account?{' '}
+        <Link href="/signup" className="text-blue-600 hover:underline">Sign Up</Link>
+      </p>
+    </div>
   )
 }
 
