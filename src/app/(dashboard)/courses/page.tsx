@@ -40,7 +40,7 @@ export default function CoursePage() {
             <ul>
                 {courses.map((course) => (
                     <li key = {course.id}>
-                        {course.name} {course.code && `(${course.code})`}
+                        <Link href={`/courses/${course.id}`}>{course.name}</Link>
                     </li>
                 ))}
             </ul>
