@@ -44,7 +44,8 @@ export default function AssignmentsPage() {
             <ul>
                 {assignments.map((a)=> (
                     <li key ={a.id}>
-                        {a.title}: {a.courses?.name}, due {new Date(a.due_date).toLocaleString()}
+                        <Link href={`/assignments/${a.id}`}>{a.title}</Link>
+                        {a.courses?.name}, due {new Date(a.due_date).toLocaleString()}
                     </li>
                 ))}
             </ul>
