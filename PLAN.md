@@ -1,115 +1,136 @@
-# Current status and first team assignments
+# StudyBuddy418Y: Team plan
 
-Audit: October 29, 2026, local `studybuddy418y` checkout. Hosted Supabase state, remote Git contents, and collaborator access have not been verified. Update this checklist as work lands.
+Updated November 2, 2026. This replaces the October 29 plan. Questions go to Ahmed.
 
-## Decision
+## Where the project is
 
-Assign small interface tasks after publishing a common starter and agreeing sample responses. Assign connected features once their specific identity, database, and access dependencies are available. Do not wait for Ahmed to build every backend feature.
+Working code (on `main` once the open branches are merged):
 
-Use this checkout as the team starter. Older planning documents discuss creating a fresh repository; this is already the new starter and does not need to be generated again. The architecture and named owners remain proposals for team confirmation.
+- **Accounts:** sign up with email confirmation, log in, log out, forgot/reset password.
+- **Dashboard shell:** sidebar, header with user menu, protected routes.
+- **Courses:** list, create, view, edit, delete.
+- **Assignments:** list, create, view, edit, delete, linked to courses in both directions.
 
-## Audit
+The **database is already built.** `supabase/migrations/001_initial_schema.sql` has been applied to the development Supabase project. It includes tables for calendar events, notifications, materials, submissions and chat, with row-level security. **None of the tasks below need database changes.**
 
-| Area | Observed state | Meaning |
-| --- | --- | --- |
-| Foundation | Next.js 16.4.3, React 19.3, TypeScript, Tailwind 4 installed | Starter generation is complete. |
-| Product interface | Generated home/layout remain; login, dashboard, courses, auth, API, and helper folders are empty | Folder names do not create working routes. |
-| Supabase | Libraries installed; `.env.local` exists | No client implementation, session handling, or verified connection. Values were not exposed. |
-| Database | No local migrations or policies | Hosted state was not inspected; implement the agreed schema in versioned migrations. |
-| Checks | Lint and TypeScript pass; no automated test suite configured | Passing starter checks does not validate product behavior. See README for build results. |
-| Git | `main` has no commits; origin is `aseridi/StudyBuddy418Y` | Publish a reviewed baseline before teammates branch. Remote state/access remain unverified. |
-| Planning | Architecture, backlog, leadership notes already exist | Confirm the existing proposal instead of creating incompatible plans. |
+The app is being rebuilt feature by feature from a reference project: `github.com/aseridi/studious-journey`. Ask Ahmed for access if you can't open it.
 
-Cache Components and Partial Prefetching are enabled in `next.config.ts`. Ahmed should settle this shared configuration before auth work merges. Keeping it requires the installed Next.js authentication/Suspense patterns; simplifying it is a team decision, not a change already made by this audit.
+## Setup (one time)
 
-## Shared baseline: next short milestone
+```bash
+git clone https://github.com/aseridi/StudyBuddy418Y.git
+cd StudyBuddy418Y
+npm ci
+cp .env.example .env.local     # Ahmed sends you the two values privately
+npm run dev
+```
 
-- [ ] Confirm actual deadline, rubric, weekly availability, and ownership with the team.
-- [ ] Review and commit starter, package lockfile, setup instructions, and agreed documents. Keep `.env.local` out of Git.
-- [ ] Inspect the remote's state before the first push; publish without force-pushing. Confirm collaborator access. Everyone must run `npm ci` and `npm run dev` from a fresh clone.
-- [ ] Agree UI routes, the architecture's camelCase response fields, error shape, and student/instructor behavior. These are proposed contracts, not existing APIs.
-- [ ] Each owner contributes synthetic response examples. Commit shared types in `src/types/contracts.ts` and fixtures under `src/lib/fixtures/` before independent pages rely on them. These files do not exist yet.
-- [ ] Give shared navigation/basic form styling one owner: proposed Aya. Coordinate root layout/global style edits.
-- [ ] Confirm the development Supabase project and private setup-value sharing. Ahmed owns the auth clients; each feature owner owns their feature's migrations and policies.
-- [ ] Record lint, type-check, and build results. Assign automated checks to Salman as a separate small task.
+Open http://localhost:3000/signup, sign up with a **real** email address, and click the confirmation link **in the same browser**. You should land on `/dashboard`.
 
-Do not mark an interface blocked by unrelated backend work. Course cards can use agreed fixtures; real course creation needs verified identity and database permissions.
+## How to work
 
-## Proposed ownership
+1. **Start from the latest `main`:**
+   ```bash
+   git switch main && git pull
+   git switch -c your-feature-name
+   ```
+2. **Follow the same steps every feature uses:**
+   1. Read the table in `src/types/database.ts`. List the required columns, the ones you'll use now, and the ones to ignore for now.
+   2. Open the matching folder in the reference project. Copy only the parts your task card lists. **The reference project sometimes uses column names that don't exist in our database; `database.ts` is always right.**
+   3. Build in this order, testing each step before the next: list → create → view → edit → delete.
+   4. Start each new file by copying the closest working file in this repo (`courses/` and `assignments/` are complete examples), then search it for the old name and change every match.
+3. **Open a pull request to `main`** with "how to test" steps. Ahmed reviews it. Small PRs get reviewed faster.
 
-| Person | Owns through interface, endpoints, data, permissions, and tests | First reviewer |
-| --- | --- | --- |
-| Ahmed | Login/logout, server identity, instructor capability, enrollment/invites; coordination | Aya |
-| Muhammad | Course list/create/details/edit, roster, shared materials | Ahmed |
-| Salman | Assignment forms/list/detail, individual progress, text submissions | Muhammad |
-| Aya | Shared navigation, student dashboard, instructor review/feedback | Salman |
+### Security rules
 
-Confirm the split based on availability and experience. Keep course list and details together initially because their data/components overlap. Assigning everyone screens while Ahmed writes every endpoint would overload the lead.
+- In a file that starts with `'use client'`, import `createClient` from `@/lib/supabase/client`. In API routes, import it from `@/lib/supabase/server`.
+- **Never trust ids sent from the browser.** API routes get the user from `supabase.auth.getUser()`. If a request includes a `course_id` (or any other foreign key), query that row first to confirm the user owns it. See the ownership check in `src/app/api/assignments/route.ts`.
 
-## First task cards
+### Files you own vs. shared files
 
-Aim for roughly one or two focused sessions per interface PR, then re-estimate from evidence. Agree actual due times with the team. A fixture checkpoint is smaller than a finished connected feature.
+You own everything inside your task's folders. **Do not edit these shared files**, except for the one-line additions named in your task:
 
-### T1 — Ahmed: real login/logout
+| Shared file | Owner |
+|---|---|
+| `src/proxy.ts` | Ahmed. You may add your route to `protectedRoutes`. |
+| `src/app/(dashboard)/layout.tsx` | Ahmed. You may add your page to the `navigation` array. |
+| `src/lib/supabase/*`, `src/contexts/AuthContext.tsx` | Ahmed |
+| `src/components/ui/*` (Button, Input) | Ahmed. Use them, don't change them. |
+| `src/types/database.ts`, `supabase/migrations/*` | Ahmed. If you need a database change, open an issue instead. |
+| `package.json`, `next.config.ts` | Ahmed. Ask before installing a package. |
 
-- **Depends on:** development Supabase project/test accounts and a settled session/configuration approach.
-- **Files:** `src/app/login/`, `src/lib/supabase/`, shared server identity helper, session refresh support as required by the selected setup.
-- **Acceptance:** labeled email/password form; submitting state; valid credentials reach `/dashboard`; invalid credentials show useful feedback; login survives refresh; logout ends access to protected server content.
-- **Handoff:** document how pages/endpoints obtain the verified user. Teammates must not create competing auth helpers or trust submitted user IDs.
-- **Boundary:** coordinate a minimal dashboard destination with Aya before completing the redirect test. Public signup, reset, and callback flows are separate unless the selected login method needs them.
+Keeping to this means nobody's pull request breaks anyone else's.
 
-### T2 — Muhammad: course list using fixtures
+---
 
-- **Depends on:** agreed course response and `/courses` route.
-- **Files:** `src/app/courses/page.tsx`, `src/components/courses/`, course fixture.
-- **Acceptance:** two courses with title, description, membership kind, and detail links; empty state; demonstration of loading/error presentation; instructor create and student join integration placeholders identified.
-- **Handoff:** reusable course card, example response, screenshots/demo steps.
-- **Boundary:** no claim of persistent creation, enrollment, or access enforcement. Real endpoint integration is a follow-up.
+## Task: Muhammad, Settings page
 
-### T3 — Aya: navigation and student dashboard using fixtures
+**Goal:** a student can view and edit their profile.
 
-- **Depends on:** dashboard/assignment response examples. Land navigation as a small first PR if others need it.
-- **Files:** `src/app/dashboard/`, navigation/dashboard components and fixtures. Coordinate root layout/global CSS changes.
-- **Acceptance:** navigation to dashboard/courses; two enrolled course summaries; three upcoming deadlines sorted by time with timezone; empty/error presentation; usable narrow-screen layout.
-- **Handoff:** list the response fields needed from course, enrollment, assignment, and feedback owners.
-- **Boundary:** fixture content is visibly development data. Replace it with authorized real data once dependencies land.
+- **Your files:** `src/app/(dashboard)/settings/page.tsx`, `src/app/api/profile/route.ts`, anything under `src/components/settings/`
+- **Table:** `profiles`. Use `full_name`, `current_semester`, `timezone`. Show `email` read-only.
+- **Reference:** `studious-journey/src/app/(dashboard)/settings/page.tsx`. It's 630 lines; use only the profile section.
+- **Steps:**
+  1. Page loads the profile. `useAuth()` already gives you `profile`.
+  2. A form with the three fields. Make `timezone` a `<select>` with a few US time zones.
+  3. A `PUT /api/profile` route that updates **only** `profiles` where `id = user.id` (from `getUser()`, never from the body).
+  4. After saving, call `refreshProfile()` from `useAuth()` so the header's initials update.
+- **Shared-file lines:** add `'/settings'` to `protectedRoutes`, and Settings to the sidebar.
+- **Not in this task:** notification preferences, deleting the account, dark mode.
+- **Done when:**
+  1. Changing your name updates the header initials after saving.
+  2. The change survives a page reload.
+  3. Logged out, `/settings` redirects to `/login`.
 
-### T4 — Salman: assignment draft form using fixtures
+## Task: Salman, Calendar (agenda view)
 
-- **Depends on:** assignment fields and a course fixture ID.
-- **Files:** `src/components/assignments/`; proposed UI route `src/app/courses/[id]/assignments/new/page.tsx`, agreed with Muhammad first.
-- **Acceptance:** title, instructions, due date/time and explicit timezone, positive maximum score; required-field errors; fixture callback demonstrates submitting/success/error behavior; selected course is clear.
-- **Handoff:** example request/response shared with Aya for dashboard/review integration.
-- **Boundary:** persistent saving/publishing is a follow-up; the real endpoint must verify course ownership.
+**Goal:** one list of everything with a date: custom events plus assignment due dates.
 
-### T5 — Muhammad: course details, after T2
+- **Your files:** `src/app/(dashboard)/calendar/`, `src/app/api/calendar/`, `src/components/calendar/`
+- **Tables:** `calendar_events` (required: `title`, `event_type`, `start_time`; use `end_time` and `course_id`), and read `assignments` for due dates.
+- **Reference:** `studious-journey/src/app/(dashboard)/calendar/` and `src/components/calendar/`. Copy logic, not the month grid.
+- **Steps:**
+  1. **Agenda page:** load upcoming `calendar_events` and upcoming `assignments` (with `courses(name)`), merge them into one list sorted by date, and group by day.
+  2. **Create a custom event:** title, start time (`datetime-local`, converted with `toISOString()`, the same as `AssignmentForm`), optional end time, optional course dropdown. Use `event_type: 'custom'`. Add a `POST /api/calendar` route **with the course ownership check** when a course is chosen.
+  3. **Delete a custom event:** `DELETE /api/calendar/[id]`.
+- **Shared-file lines:** `'/calendar'` in `protectedRoutes`, and Calendar in the sidebar.
+- **Not in this task:** the month grid, recurring events, editing events (v2), syncing assignments into `calendar_events`.
+- **Done when:**
+  1. An event created for 7:00 PM shows at 7:00 PM.
+  2. Assignment due dates appear in the agenda.
+  3. Another user's events never appear.
+  4. Deleting a course removes its events (database cascade).
 
-- **Depends on:** T2 and agreed details response.
-- **Files:** `src/app/courses/[id]/page.tsx`, course components.
-- **Acceptance:** known fixture ID shows course details; unknown ID shows unavailable state; materials/assignment sections have agreed integration points; student/instructor controls show intended differences.
-- **Boundary:** role-dependent buttons preview the UI; server/database permissions are still required. Do not assign list/details simultaneously to different people without splitting component and contract ownership first.
+## Task: Aya, Dashboard home, then Progress
 
-## When connected work becomes ready
+**Goal:** replace the "Welcome" placeholder with a useful overview. This task is read-only, so no API routes are needed.
 
-| Feature | Dependency | Owner's completion evidence |
-| --- | --- | --- |
-| Course create/list/details | Verified identity/instructor capability; course schema/policies | Muhammad creates a persistent course; another instructor cannot edit it. |
-| Enrollment | Identity, course records, membership/invite rules | Ahmed enrolls two students, denies outsider access, and avoids duplicate memberships. |
-| Assignments | Course ownership/membership, draft/published rules | Salman publishes a real assignment; members can read it, outsiders cannot, drafts stay hidden. |
-| Dashboard | Real enrollment/course/assignment responses | Aya shows the signed-in student's own courses/deadlines, loading/errors, and current results. |
-| Submissions | Published assignment, active enrollment, deadline/uniqueness rules | Salman shows a persistent receipt; a second student's work stays independent. |
-| Feedback | Submission contract, owner permission, score rules | Aya returns a valid score; only the associated student sees their result. |
-| Materials | Course access helpers, private storage, metadata/policies | Muhammad publishes a PDF; members can download it and outsiders cannot. |
+- **Your files:** `src/app/(dashboard)/dashboard/page.tsx` (yours now), `src/components/dashboard/`. Later, `src/app/(dashboard)/progress/`.
+- **Tables:** `assignments` (with `courses(name)`) and `courses`.
+- **Reference:** `studious-journey/src/app/(dashboard)/dashboard/page.tsx` and `src/app/(dashboard)/progress/`.
+- **Dashboard steps:**
+  1. Keep the welcome line.
+  2. **"Due in the next 7 days":** assignments with `due_date` between now and 7 days from now, not `completed`, soonest first. Each one links to `/assignments/[id]` and shows its course name.
+  3. **"Your courses":** each course with a link and its number of assignments.
+  4. An empty state for each section.
+- **Then Progress (second PR):** per course, a count of assignments by `status`, and the number overdue (past due and not completed). Add `'/progress'` to `protectedRoutes` and to the sidebar.
+- **Not in this task:** charts, AI summaries, study time tracking.
+- **Done when:**
+  1. An assignment due in 3 days shows; one due in 10 days doesn't; a completed one doesn't.
+  2. A new account sees the empty states, not errors.
 
-Ahmed and Muhammad review identity/course/enrollment interfaces early to avoid mutually blocking dependencies or recursive database policies. Every owner writes their feature's migrations, policies, relevant tests, and handoff notes. Ahmed coordinates consistency.
+## Ahmed (lead)
 
-## Lead the work
+- **First:** merge `components` → `courses` → `assignments` into `main`, so everyone starts from the same code.
+- Review every pull request within two days.
+- Continue the core: materials (file uploads), then AI chat.
+- **Design the instructor side** (below).
 
-1. One board: Backlog → Ready → In progress → Review → Done. Every issue has one owner, reviewer, dependency, acceptance criteria, and demo steps. One active issue per person.
-2. Distinguish “interface complete with fixtures” from “connected feature complete.” A mock screen does not close the real feature issue.
-3. Use small task branches, for example `codex/course-list`. Require a teammate review and relevant checks; coordinate shared schema/configuration changes.
-4. Twice weekly ask what runs, what comes next, and the exact blocker. After a day stuck, pair briefly and shrink the task while the owner drives.
-5. Demo merged work regularly from a shared build; isolated branches do not prove integration.
-6. Protect Ahmed's capacity. Rotate routine release checks and reporting; owners fix their own feature failures. Do not silently take over unfinished features.
-7. First complete: instructor creates course → student joins → assignment published → submission → feedback → student sees result. AI, email, calendar grid, and extra polish wait.
+## Instructor side (new, not in the reference project)
 
+Instructors create a course for a class, students join it, instructors publish assignments and review submitted work.
+
+**Why Ahmed starts it:** today every course belongs to one student (`courses.user_id`). Instructor courses need roles, an enrollment table, and new security policies on `courses`, `assignments` and `work_submissions`. That one change touches every existing feature, so it has to be designed in one place.
+
+- **Phase 1 (Ahmed):** one migration adding `profiles.role`, an `enrollments` table (course ↔ student), join codes, and the updated policies.
+- **Phase 2 (open to the team once Phase 1 is merged):** instructor pages under `src/app/(instructor)/`: create a class course, view the roster, publish assignments to enrolled students, review submissions and give feedback. Task cards will be written when Phase 1 lands. Finishing your current task first is how you get first pick.
