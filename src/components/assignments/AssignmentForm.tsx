@@ -7,10 +7,16 @@ import { Input } from '@/components/ui/Input'
 
 type Props = { assignment?: Tables<'assignments'> }
 
+function toLocalInput(iso: string) {
+  const d = new Date(iso)
+  const offsetMs = d.getTimezoneOffset() * 60_000
+  return new Date(d.getTime() - offsetMs).toISOString().slice(0, 16)
+}
+
 export function AssignmentForm({ assignment }: Props) {
   const [title, setTitle] = useState(assignment?.title ?? '')
   const [courseId, setCourseId] = useState(assignment?.course_id ?? '')
-  const [dueDate, setDueDate] = useState('')
+  const [dueDate, setDueDate] = useState(assignment ? toLocalInput(assignment.due_date) : '')
 
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
