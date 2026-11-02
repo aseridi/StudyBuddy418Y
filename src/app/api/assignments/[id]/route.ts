@@ -50,7 +50,7 @@ export async function DELETE(
         if (!user)
             return NextResponse.json({error: 'Unauthorized' }, {status: 401})
 
-        // delete this courses files from storage 
+        // assignments will have their own files later (submited work)
 
         const {error} = await supabase.from('assignments').delete().eq('id', id)
         if(error)
