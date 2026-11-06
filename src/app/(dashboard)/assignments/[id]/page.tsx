@@ -41,7 +41,7 @@ export default function AssignmentDetailPage() {
         if (!confirm(`Delete "${assignment!.title}"?.`)) return
             const res = await fetch(`/api/assignments/${id}`, { method: 'DELETE' })
         if (!res.ok) {
-            alert('Could not delete course')
+            alert('Could not delete assignment')
             return
         }
         window.location.href = '/assignments'
@@ -55,7 +55,7 @@ export default function AssignmentDetailPage() {
                 <Link href={`/courses/${assignment.course_id}`}>{assignment.courses?.name}</Link>
             </p>
             <p>Due: {new Date(assignment.due_date).toLocaleString()}</p>
-            <p>Status: {assignment.priority}</p>
+            <p>Priority: {assignment.priority}</p>
             {assignment.description && <p>{assignment.description}</p>}
             <Link href={`/assignments/${id}/edit`}>Edit</Link>
             <Button variant="danger" onClick={handleDelete}>Delete Assignment</Button>
