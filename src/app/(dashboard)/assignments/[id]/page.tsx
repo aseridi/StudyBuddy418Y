@@ -41,10 +41,25 @@ export default function AssignmentDetailPage() {
         if (!confirm(`Delete "${assignment!.title}"?.`)) return
             const res = await fetch(`/api/assignments/${id}`, { method: 'DELETE' })
         if (!res.ok) {
-            alert('Could not delete course')
+            alert('Could not delete assignment')
             return
         }
         window.location.href = '/assignments'
+    }
+
+    async function handleStatusChange(newStatus: string) {
+        const res = await fetch(`/api/assignments/${id}/status`, {
+            method: 'PATCH',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({status: newStatus}),
+        })
+
+        if(!res.ok) {
+            alert('Could not update status')
+            return
+        }
+
+        setAssignment({...assignment!, status: newStatus})
     }
 
     return (
@@ -55,7 +70,12 @@ export default function AssignmentDetailPage() {
                 <Link href={`/courses/${assignment.course_id}`}>{assignment.courses?.name}</Link>
             </p>
             <p>Due: {new Date(assignment.due_date).toLocaleString()}</p>
-            <p>Status: {assignment.priority}</p>
+            <p>Priority: {assignment.priority}</p>
+            <p>Progress</p>
+            <Button variant={assignment.status === 'not_started' ? 'primary' : 'outline'} onClick={() => handleStatusChange('not_started')}>Not Started</Button>
+            <Button variant={assignment.status === 'in_progress' ? 'primary' : 'outline'}onClick={() => handleStatusChange('in_progress')}>In Progress</Button>
+            <Button variant={assignment.status === 'completed' ? 'primary' : 'outline'} onClick={() => handleStatusChange('completed')}>Completed</Button>
+
             {assignment.description && <p>{assignment.description}</p>}
             <Link href={`/assignments/${id}/edit`}>Edit</Link>
             <Button variant="danger" onClick={handleDelete}>Delete Assignment</Button>
