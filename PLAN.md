@@ -1,6 +1,6 @@
 # StudyBuddy418Y: Team plan
 
-Updated November 2, 2026. This replaces the October 29 plan. Questions go to Ahmed.
+Updated November 6, 2026. This replaces the November 2 plan. Questions go to Ahmed.
 
 ## Where the project is
 
@@ -11,7 +11,7 @@ Working code (on `main` once the open branches are merged):
 - **Courses:** list, create, view, edit, delete.
 - **Assignments:** list, create, view, edit, delete, linked to courses in both directions.
 
-The **database is already built.** `supabase/migrations/001_initial_schema.sql` has been applied to the development Supabase project. It includes tables for calendar events, notifications, materials, submissions and chat, with row-level security. **None of the tasks below need database changes.**
+The **database is already built.** `supabase/migrations/001_initial_schema.sql` has been applied to the development Supabase project. It includes tables for calendar events, notifications, materials, submissions and chat, with row-level security. `002` adds `materials.summary` and stops duplicate reminders. **None of the tasks below need database changes.**
 
 The app is being rebuilt feature by feature from a reference project: `github.com/aseridi/studious-journey`. Ask Ahmed for access if you can't open it.
 
@@ -82,55 +82,51 @@ Keeping to this means nobody's pull request breaks anyone else's.
   2. The change survives a page reload.
   3. Logged out, `/settings` redirects to `/login`.
 
-## Task: Salman, Calendar (agenda view)
+## Task: Salman, Archive courses
 
-**Goal:** one list of everything with a date: custom events plus assignment due dates.
+**Goal:** a student can archive a course they've finished, so it leaves their active list without deleting anything.
 
-- **Your files:** `src/app/(dashboard)/calendar/`, `src/app/api/calendar/`, `src/components/calendar/`
-- **Tables:** `calendar_events` (required: `title`, `event_type`, `start_time`; use `end_time` and `course_id`), and read `assignments` for due dates.
-- **Reference:** `studious-journey/src/app/(dashboard)/calendar/` and `src/components/calendar/`. Copy logic, not the month grid.
+- **Your files:** `src/app/api/courses/[id]/archive/route.ts` (new), plus the archive button and filter in `src/app/(dashboard)/courses/page.tsx` and `src/app/(dashboard)/courses/[id]/page.tsx`.
+- **Table:** `courses`. Use `is_active` (`true` = active, `false` = archived). No database change.
 - **Steps:**
-  1. **Agenda page:** load upcoming `calendar_events` and upcoming `assignments` (with `courses(name)`), merge them into one list sorted by date, and group by day.
-  2. **Create a custom event:** title, start time (`datetime-local`, converted with `toISOString()`, the same as `AssignmentForm`), optional end time, optional course dropdown. Use `event_type: 'custom'`. Add a `POST /api/calendar` route **with the course ownership check** when a course is chosen.
-  3. **Delete a custom event:** `DELETE /api/calendar/[id]`.
-- **Shared-file lines:** `'/calendar'` in `protectedRoutes`, and Calendar in the sidebar.
-- **Not in this task:** the month grid, recurring events, editing events (v2), syncing assignments into `calendar_events`.
+  1. **API:** `PATCH /api/courses/[id]/archive` with body `{ archived: boolean }`. Get the user from `getUser()` and update **only** `is_active`, where `id` matches **and** `user_id = user.id`. Return 404 if no row was updated. Don't change the existing `PUT` route.
+  2. **Course detail page:** an "Archive" button (or "Unarchive" when archived). Ask for confirmation before archiving.
+  3. **Course list:** show active courses by default, plus a "Show archived" toggle that lists archived ones under their own heading.
+  4. **Assignment form:** the course dropdown in `AssignmentForm` lists active courses only. This is a one-line filter; mention it in your PR.
+- **Not in this task:** deleting courses (already built), archiving assignments.
 - **Done when:**
-  1. An event created for 7:00 PM shows at 7:00 PM.
-  2. Assignment due dates appear in the agenda.
-  3. Another user's events never appear.
-  4. Deleting a course removes its events (database cascade).
+  1. Archiving a course hides it from the list; "Show archived" brings it back, with its assignments intact.
+  2. Unarchiving returns it to the active list.
+  3. Another user's course id in the request returns 404 and changes nothing.
 
-## Task: Aya, Dashboard home, then Progress
+## Task: Aya, Assignment list filters
 
-**Goal:** replace the "Welcome" placeholder with a useful overview. This task is read-only, so no API routes are needed.
+**Goal:** make the assignments page easy to scan when there are many assignments. This task is read-only, so no API routes are needed.
 
-- **Your files:** `src/app/(dashboard)/dashboard/page.tsx` (yours now), `src/components/dashboard/`. Later, `src/app/(dashboard)/progress/`.
-- **Tables:** `assignments` (with `courses(name)`) and `courses`.
-- **Reference:** `studious-journey/src/app/(dashboard)/dashboard/page.tsx` and `src/app/(dashboard)/progress/`.
-- **Dashboard steps:**
-  1. Keep the welcome line.
-  2. **"Due in the next 7 days":** assignments with `due_date` between now and 7 days from now, not `completed`, soonest first. Each one links to `/assignments/[id]` and shows its course name.
-  3. **"Your courses":** each course with a link and its number of assignments.
-  4. An empty state for each section.
-- **Then Progress (second PR):** per course, a count of assignments by `status`, and the number overdue (past due and not completed). Add `'/progress'` to `protectedRoutes` and to the sidebar.
-- **Not in this task:** charts, AI summaries, study time tracking.
+- **Your files:** `src/app/(dashboard)/assignments/page.tsx` and a new `src/components/assignments/AssignmentFilters.tsx`.
+- **Tables:** `assignments` (with `courses(name)`), already loaded by the page.
+- **Steps:**
+  1. **Filter by course:** a dropdown with "All courses" plus the student's courses.
+  2. **Filter by status:** All / Not started / In progress / Completed.
+  3. **Sort:** by due date (default, soonest first) or by priority (high → low).
+  4. **Overdue badge:** an "Overdue" label on assignments past their due date that aren't completed.
+  5. An empty state when no assignment matches the filters ("No assignments match these filters").
+- **Not in this task:** saving filter choices, search by text, the dashboard (Ahmed is building "Due soon").
 - **Done when:**
-  1. An assignment due in 3 days shows; one due in 10 days doesn't; a completed one doesn't.
-  2. A new account sees the empty states, not errors.
+  1. Choosing a course and a status shows only matching assignments.
+  2. An assignment due yesterday and not completed shows "Overdue"; a completed one doesn't.
+  3. Clearing the filters shows everything again.
 
 ## Ahmed (lead)
 
-- **First:** merge `components` → `courses` → `assignments` into `main`, so everyone starts from the same code.
 - Review every pull request within two days.
-- Continue the core: materials (file uploads), then AI chat.
-- **Design the instructor side** (below).
+- Build the rest of the MVP, in this order:
+  1. "Due soon" on the dashboard, then the calendar (UC-03, in-app part).
+  2. Material upload and summaries (UC-04).
+  3. AI study chat (UC-05).
+  4. AI draft check on assignments (US-11).
+  5. Email reminders (UC-03, email part).
 
-## Instructor side (new, not in the reference project)
+## Dropped: instructor side
 
-Instructors create a course for a class, students join it, instructors publish assignments and review submitted work.
-
-**Why Ahmed starts it:** today every course belongs to one student (`courses.user_id`). Instructor courses need roles, an enrollment table, and new security policies on `courses`, `assignments` and `work_submissions`. That one change touches every existing feature, so it has to be designed in one place.
-
-- **Phase 1 (Ahmed):** one migration adding `profiles.role`, an `enrollments` table (course ↔ student), join codes, and the updated policies.
-- **Phase 2 (open to the team once Phase 1 is merged):** instructor pages under `src/app/(instructor)/`: create a class course, view the roster, publish assignments to enrolled students, review submissions and give feedback. Task cards will be written when Phase 1 lands. Finishing your current task first is how you get first pick.
+The instructor/class-course idea from the previous plan is **out of scope**. It isn't part of our Milestone 1 and 2 requirements, which describe a personal study planner for individual students. Don't start work on roles, enrollments or instructor pages.
