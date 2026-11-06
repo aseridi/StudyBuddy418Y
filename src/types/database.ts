@@ -445,6 +445,7 @@ export type Database = {
           processing_error: string | null
           raw_text: string | null
           source_text: string | null
+          summary: string | null
           title: string
           updated_at: string | null
           user_id: string
@@ -466,6 +467,7 @@ export type Database = {
           processing_error?: string | null
           raw_text?: string | null
           source_text?: string | null
+          summary?: string | null
           title: string
           updated_at?: string | null
           user_id: string
@@ -487,6 +489,7 @@ export type Database = {
           processing_error?: string | null
           raw_text?: string | null
           source_text?: string | null
+          summary?: string | null
           title?: string
           updated_at?: string | null
           user_id?: string
