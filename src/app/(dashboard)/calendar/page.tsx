@@ -6,11 +6,10 @@ import { Button } from '@/components/ui/Button'
 import Link from 'next/link'
 import { startOfWeek, addDays, isSameDay } from "@/lib/calendar"
 import type { Tables } from '@/types/database'
+import { CalendarAssignment } from "@/components/calendar/WeekView"
+import { WeekView } from "@/components/calendar/WeekView"
 
 
-type CalendarAssignment = Pick<Tables<'assignments'>, 'id' | 'title' | 'due_date' > & {
-    courses: {name: string; code: string | null } | null 
-}
 export default function CalendarPage() {
     const [assignments, setAssignments] = useState<CalendarAssignment[]>([])
     const [error, setError] = useState('')
@@ -23,7 +22,7 @@ export default function CalendarPage() {
             setError('')
             const {data, error} = await createClient()
             .from('assignments')
-            .select('id, title, due_date, courses(name, code)')
+            .select('id, title, due_date, status, courses(name, code)')
             .gte('due_date', weekStart.toISOString())
             .lt('due_date', addDays(weekStart, 7).toISOString())
             .order('due_date', {ascending: true})
@@ -52,14 +51,7 @@ export default function CalendarPage() {
             {loading ? <p>Loading ....</p>
             :error ? <p> Error: {error}</p>
             :assignments.length ===0? <p>No deadlines this week.</p>
-            :<ul>
-                {assignments.map((a) => (
-                    <li key = {a.id}>
-                        <Link href={`/assignments/${a.id}`}>{a.title}</Link>
-                        {` `}{a.courses?.name}, {` `} due {new Date(a.due_date).toLocaleString()}
-                    </li>
-                ))}
-            </ul>}
+            :<WeekView weekStart={weekStart} assignments={assignments}/>} 
         </div>
     )
 }
