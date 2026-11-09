@@ -7,10 +7,13 @@ import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import { Button } from '@/components/ui/Button'
 
-type CourseWithAssignments = Tables<'courses'> & { assignments: Tables<'assignments'>[]}
+
+type MaterialItem = Pick<Tables<'materials'>, 'id' | 'title' | 'material_type' | 'is_processed' | 'processing_error' | 'created_at'>
+
+type CourseWithDetails = Tables<'courses'> & { assignments: Tables<'assignments'>[], materials: MaterialItem[]}
 
 export default function CourseDetailPage() {
-  const [course, setCourse] = useState<CourseWithAssignments | null>(null)
+  const [course, setCourse] = useState<CourseWithDetails | null>(null)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
   const { id } = useParams<{ id: string }>()
@@ -19,9 +22,10 @@ export default function CourseDetailPage() {
     async function loadCourse() {
       const { data, error } = await createClient()
         .from('courses')
-        .select('*, assignments(*)')
+        .select('*, assignments(*), materials(id, title, material_type, is_processed, processing_error, created_at)')
         .eq('id', id)
         .order('due_date', {referencedTable: 'assignments'})
+        .order('created_at', {referencedTable:'materials', ascending: false})
         .single()
 
       if (error) {
@@ -67,6 +71,19 @@ export default function CourseDetailPage() {
             </li>
           ))}
         </ul>
+      )}
+      <h2>Materials</h2>
+      <Button disabled>Upload Materials</Button>
+      {course.materials.length === 0? (
+        <p>No materials for this course yet.</p>
+      ) : (
+      <ul>
+        {course.materials.map((m) => (
+          <li key = {m.id}>
+            {m.title} 
+          </li>
+        ))}
+      </ul>
       )}
       <Link href={`/courses/${id}/edit`}>Edit</Link>
       <Button variant="danger" onClick={handleDelete}>Delete course</Button>
