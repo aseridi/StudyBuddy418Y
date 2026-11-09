@@ -3,12 +3,15 @@
 import { useState } from 'react'
 import { MATERIAL_TYPES } from '@/lib/materials'
 import { Button } from '@/components/ui/Button'
+import { Tables } from '@/types/database'
 import { Input } from '@/components/ui/Input'
 
-type Props = { courseId: string}
+type Props = { courseId: string
+    onUploaded: (material: Tables<'materials'>) => void
+}
 
 
-export function UploadMaterialForm({courseId}: Props) {
+export function UploadMaterialForm({courseId, onUploaded}: Props) {
     const [file, setFile] = useState<File | null> (null)
     const [type, setType] = useState('other')
     const [title, setTitle] = useState('')
@@ -42,8 +45,9 @@ export function UploadMaterialForm({courseId}: Props) {
             setLoading(false)
             return
         }
-        console.log(json.material)
         setLoading(false)
+        onUploaded(json.material)
+
     }
 
     return (

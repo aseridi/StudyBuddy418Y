@@ -54,6 +54,11 @@ export default function CourseDetailPage() {
     window.location.href = '/courses'
   }
 
+  function handleUploaded(material: Tables<'materials'>) {
+    setShowUpload(false)
+    setCourse((prev) => prev && {...prev, materials: [material, ...prev.materials]})
+  }
+
   return (
     <div>
       <Link href="/courses">Back to courses</Link>
@@ -76,7 +81,7 @@ export default function CourseDetailPage() {
       )}
       <h2>Materials</h2>
       <Button onClick={()=>setShowUpload(!showUpload)}>Upload Materials</Button>
-      {showUpload && <UploadMaterialForm courseId={id}/>}
+      {showUpload && <UploadMaterialForm courseId={id} onUploaded={handleUploaded}/>}
       {course.materials.length === 0? (
         <p>No materials for this course yet.</p>
       ) : (
