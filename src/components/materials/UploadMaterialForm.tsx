@@ -17,8 +17,33 @@ export function UploadMaterialForm({courseId}: Props) {
 
     async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault()
-        console.log(file, type, title)
+        setError('')
+        setLoading(true)
 
+        if(!file) {
+            setError('please choose a file')
+            return
+        }
+
+        const formData = new FormData()
+        formData.append('file', file)
+        formData.append('courseId', courseId)
+        formData.append('title', title)
+        formData.append('type', type)
+
+        const res = await fetch('/api/materials', {
+            method: 'POST',
+            body: formData
+        })
+
+        const json = await res.json()
+        if(!res.ok) {
+            setError(json.error)
+            setLoading(false)
+            return
+        }
+        console.log(json.material)
+        setLoading(false)
     }
 
     return (
