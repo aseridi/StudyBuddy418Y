@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse} from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import {extractMaterialText} from '@/lib/files/extract-text'
 
 const ALLOWED_TYPES: Record<string, string> ={
     'application/pdf': 'pdf',
@@ -64,7 +65,22 @@ export async function POST(request: NextRequest) {
     }
 
 
+    const buffer = Buffer.from(await file.arrayBuffer())
 
-    return NextResponse.json({name: file.name, size: file.size, type: file.type, courseId, materialType, filePath})
+    let rawText: string | null = null
+    let processingError: string | null = null
+
+    try {
+        const parsed = await extractMaterialText(buffer, materialType)
+        rawText = parsed.trim() || null
+        if (!rawText) {
+            processingError = 'no text found in file (could be a scaanned image needing OCR)'
+        } 
+    } catch (error) {
+        console.error(`[upload] text extraction failed for ${file.name}`)
+    }
+
+
+    return NextResponse.json({name: file.name, size: file.size, type: file.type, courseId, materialType, textPreview:rawText?.slice(0, 200), processingError})
 
 }
