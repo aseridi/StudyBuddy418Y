@@ -51,7 +51,20 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({error: 'Course not found'}, {status: 404})
     }
 
+    const materialId = crypto.randomUUID()
+    const filePath = `${user.id}/${materialId}.${materialType}`
 
-    return NextResponse.json({name: file.name, size: file.size, type: file.type, courseId, materialType})
+    const {error: uploadError} = await supabase.storage
+    .from('materials')
+    .upload(filePath, file, {contentType: file.type})
+
+    if(uploadError) {
+        console.error('Upload error', uploadError)
+        return NextResponse.json({error: 'Failed to upload file to storage'}, {status: 500})
+    }
+
+
+
+    return NextResponse.json({name: file.name, size: file.size, type: file.type, courseId, materialType, filePath})
 
 }
