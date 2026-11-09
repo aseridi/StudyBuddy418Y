@@ -41,6 +41,17 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({error: 'Only PDF, DOCX, or TEXT files are allowed'}, {status: 400})
     }
 
+    const {data: course} = await supabase
+    .from('courses')
+    .select('id')
+    .eq('id', courseId)
+    .single()
+
+    if(!course) { 
+        return NextResponse.json({error: 'Course not found'}, {status: 404})
+    }
+
+
     return NextResponse.json({name: file.name, size: file.size, type: file.type, courseId, materialType})
 
 }
