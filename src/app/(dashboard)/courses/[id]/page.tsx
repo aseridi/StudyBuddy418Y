@@ -6,7 +6,7 @@ import type { Tables } from '@/types/database'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import { Button } from '@/components/ui/Button'
-
+import { UploadMaterialForm } from '@/components/materials/UploadMaterialForm'
 
 type MaterialItem = Pick<Tables<'materials'>, 'id' | 'title' | 'material_type' | 'is_processed' | 'processing_error' | 'created_at'>
 
@@ -17,6 +17,8 @@ export default function CourseDetailPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
   const { id } = useParams<{ id: string }>()
+  const [showUpload, setShowUpload] = useState(false)
+
 
   useEffect(() => {
     async function loadCourse() {
@@ -73,7 +75,8 @@ export default function CourseDetailPage() {
         </ul>
       )}
       <h2>Materials</h2>
-      <Button disabled>Upload Materials</Button>
+      <Button onClick={()=>setShowUpload(!showUpload)}>Upload Materials</Button>
+      {showUpload && <UploadMaterialForm courseId={id}/>}
       {course.materials.length === 0? (
         <p>No materials for this course yet.</p>
       ) : (
