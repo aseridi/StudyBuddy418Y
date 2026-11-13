@@ -88,7 +88,7 @@ export default function CourseDetailPage() {
       <ul>
         {course.materials.map((m) => (
           <li key = {m.id}>
-            {m.title} 
+            <Link href={`/materials/${m.id}`}>{m.title}</Link>
           </li>
         ))}
       </ul>
