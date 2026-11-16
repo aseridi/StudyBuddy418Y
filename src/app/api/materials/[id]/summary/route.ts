@@ -16,7 +16,7 @@ export async function POST(request: NextRequest,
 
             const { data: material, error: findError} = await supabase
             .from('materials')
-            .select('title, material_type, raw_text')
+            .select('title, material_type, raw_text, is_processed')
             .eq('user_id', user.id)
             .eq('id', id)
             .maybeSingle()
@@ -31,6 +31,10 @@ export async function POST(request: NextRequest,
 
             if(!material.raw_text) {
                 return NextResponse.json({error: 'Material has no text to summarize'}, {status: 400})
+            }
+
+            if(material.is_processed) {
+                return NextResponse.json({error: 'Material already processed'}, {status: 409})
             }
 
             let result
