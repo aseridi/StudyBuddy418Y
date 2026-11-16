@@ -7,7 +7,7 @@ import { useParams } from 'next/navigation'
 import { Button } from '@/components/ui/Button'
 
 
-type MaterialDetail = Pick<Tables<'materials'>, 'title' | 'material_type' | 'created_at' | 'is_processed' | 'processing_error' | 'raw_text' |'file_url' |'course_id'
+type MaterialDetail = Pick<Tables<'materials'>, 'title' | 'material_type' | 'created_at' | 'is_processed' | 'processing_error' | 'raw_text' |'file_url' |'course_id' | 'summary' | 'extracted_topics'
 > & {courses : {name: string} | null }
 
 export default function MaterialDetailPage() {
@@ -17,11 +17,14 @@ export default function MaterialDetailPage() {
     const [material, setMaterial] = useState<MaterialDetail | null> (null)
     const {id} = useParams<{id: string}>()
     const [fileError, setFileError] = useState('')
+    const [summaryError, setSummaryError] = useState('')
+    const [summarizing, setSummarizing] = useState(false)
+
     useEffect(() =>  {
         async function loadMaterial() {
             const {data, error} = await createClient()
             .from('materials')
-            .select('title, material_type, created_at, is_processed, processing_error, raw_text, file_url, course_id, courses(name)')
+            .select('title, material_type, created_at, is_processed, processing_error, raw_text, file_url, course_id, summary, extracted_topics, courses(name)')
             .eq('id', id)
             .maybeSingle()
 
@@ -68,6 +71,23 @@ export default function MaterialDetailPage() {
         window.location.href = `/courses/${material.course_id}`
     }
 
+    async function handleGenerateSummary() {
+        setSummaryError('')
+        setSummarizing(true)
+        try {
+            const res = await fetch(`/api/materials/${id}/summary`, {method: 'POST'})
+            const body = await res.json()
+            if(!res.ok) {
+                setSummaryError(body.error ?? 'Could not generate summary')
+                return
+            }
+            setMaterial(prev => prev && { ...prev, ...body.material })
+            setSummaryError('') 
+        } finally {
+            setSummarizing(false)
+        }
+    }
+
     if(loading) return <p>Loading...</p>
     if(error) return <p>Error : {error}</p>
     if(!material) return <p>Material not found</p>
@@ -84,9 +104,20 @@ export default function MaterialDetailPage() {
             {material.processing_error? (
                 <p>Could not read text from this file: {material.processing_error}</p>
             ): material.is_processed ? (
-                <p>Summary ready</p>
+                <div>
+                    <h2>Summary</h2>
+                    <p>{material.summary}</p>
+                    <h3>Key Concepts</h3>
+                    <ul>
+                        {material.extracted_topics?.map((t) => <li key={t}>{t}</li>)}
+                    </ul>
+                </div>
             ) : (
+                <div>
                 <p>Text extracted. summary not generated yet</p>
+                <Button isLoading={summarizing} onClick={handleGenerateSummary}>Generate Summary</Button>
+                {summaryError && <p>{summaryError}</p>}
+                </div>
             )}
 
         </div>
