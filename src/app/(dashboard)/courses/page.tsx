@@ -5,6 +5,7 @@ import type {Tables} from '@/types/database'
 import Link from 'next/link'
 
 
+
 export default function CoursePage() {
     const [courses, setCourses] = useState<Tables<'courses'>[]>([])
     const [error, setError] = useState('')

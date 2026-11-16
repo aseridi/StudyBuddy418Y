@@ -1,0 +1,1 @@
+export const MATERIAL_TYPES = ['syllabus', 'lecture_notes', 'slides', 'textbook', 'assignment_doc', 'announcement', 'other']
