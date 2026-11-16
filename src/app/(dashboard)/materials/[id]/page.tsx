@@ -4,8 +4,10 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Tables } from '@/types/database'
 import { useParams } from 'next/navigation'
+import { Button } from '@/components/ui/Button'
 
-type MaterialDetail = Pick<Tables<'materials'>, 'title' | 'material_type' | 'created_at' | 'is_processed' | 'processing_error' | 'raw_text'
+
+type MaterialDetail = Pick<Tables<'materials'>, 'title' | 'material_type' | 'created_at' | 'is_processed' | 'processing_error' | 'raw_text' |'file_url'
 > & {courses : {name: string} | null }
 
 export default function MaterialDetailPage() {
@@ -14,12 +16,12 @@ export default function MaterialDetailPage() {
 
     const [material, setMaterial] = useState<MaterialDetail | null> (null)
     const {id} = useParams<{id: string}>()
-
+    const [fileError, setFileError] = useState('')
     useEffect(() =>  {
         async function loadMaterial() {
             const {data, error} = await createClient()
             .from('materials')
-            .select('title, material_type, created_at, is_processed, processing_error, raw_text, courses(name)')
+            .select('title, material_type, created_at, is_processed, processing_error, raw_text, file_url, courses(name)')
             .eq('id', id)
             .maybeSingle()
 
@@ -36,6 +38,21 @@ export default function MaterialDetailPage() {
         loadMaterial()
     }, [id])
 
+    async function handleViewFile() {
+        if(!material?.file_url) return
+
+        const {data, error } = await createClient()
+        .storage
+        .from('materials')
+        .createSignedUrl(material.file_url, 120)
+
+        if(error) {
+            setFileError(error.message)
+            return
+        }
+        window.open(data.signedUrl, '_blank')
+    }
+
     if(loading) return <p>Loading...</p>
     if(error) return <p>Error : {error}</p>
     if(!material) return <p>Material not found</p>
@@ -47,6 +64,7 @@ export default function MaterialDetailPage() {
             <p>Material Type: {material.material_type}</p>
             <p>Created: {material.created_at ? new Date(material.created_at).toLocaleDateString() : '—'}</p>
             <p>Raw Text: {material.raw_text?.slice(0, 500)}</p>
+            <Button onClick={handleViewFile}>View File</Button> {fileError && <p>{fileError}</p>}
             {material.processing_error? (
                 <p>Could not read text from this file: {material.processing_error}</p>
             ): material.is_processed ? (
