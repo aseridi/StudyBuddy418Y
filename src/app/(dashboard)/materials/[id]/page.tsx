@@ -7,7 +7,7 @@ import { useParams } from 'next/navigation'
 import { Button } from '@/components/ui/Button'
 
 
-type MaterialDetail = Pick<Tables<'materials'>, 'title' | 'material_type' | 'created_at' | 'is_processed' | 'processing_error' | 'raw_text' |'file_url'
+type MaterialDetail = Pick<Tables<'materials'>, 'title' | 'material_type' | 'created_at' | 'is_processed' | 'processing_error' | 'raw_text' |'file_url' |'course_id'
 > & {courses : {name: string} | null }
 
 export default function MaterialDetailPage() {
@@ -21,7 +21,7 @@ export default function MaterialDetailPage() {
         async function loadMaterial() {
             const {data, error} = await createClient()
             .from('materials')
-            .select('title, material_type, created_at, is_processed, processing_error, raw_text, file_url, courses(name)')
+            .select('title, material_type, created_at, is_processed, processing_error, raw_text, file_url, course_id, courses(name)')
             .eq('id', id)
             .maybeSingle()
 
@@ -39,6 +39,7 @@ export default function MaterialDetailPage() {
     }, [id])
 
     async function handleViewFile() {
+        setFileError('')
         if(!material?.file_url) return
 
         const {data, error } = await createClient()
@@ -53,6 +54,20 @@ export default function MaterialDetailPage() {
         window.open(data.signedUrl, '_blank')
     }
 
+    async function handleDelete() {
+        setFileError('')
+        if(!material) return
+        if(!confirm('Delete this material?')) return
+
+        const res = await fetch(`/api/materials/${id}`, {method: 'DELETE'})
+        if(!res.ok) {
+            const body = await res.json()
+            setFileError(body.error ?? 'Could not delete material')
+            return
+        }
+        window.location.href = `/courses/${material.course_id}`
+    }
+
     if(loading) return <p>Loading...</p>
     if(error) return <p>Error : {error}</p>
     if(!material) return <p>Material not found</p>
@@ -65,6 +80,7 @@ export default function MaterialDetailPage() {
             <p>Created: {material.created_at ? new Date(material.created_at).toLocaleDateString() : '—'}</p>
             <p>Raw Text: {material.raw_text?.slice(0, 500)}</p>
             <Button onClick={handleViewFile}>View File</Button> {fileError && <p>{fileError}</p>}
+            <Button variant="danger" onClick={handleDelete}>Delete Material</Button>
             {material.processing_error? (
                 <p>Could not read text from this file: {material.processing_error}</p>
             ): material.is_processed ? (
