@@ -24,8 +24,10 @@ export async function summarizeMaterial(input: SummaryInput): Promise<SummaryRes
   const text = input.text.slice(0, MAX_CHARS)
 
   const completion = await client.chat.completions.create({
-    model: MODELS.fast,
+    model: MODELS.fast, 
     response_format: { type: 'json_object' },
+    // @ts-expect-error DeepSeek-only param, not in the openai SDK types
+    thinking: {type: 'disabled'},
     messages: [
       {
         role: 'system',
