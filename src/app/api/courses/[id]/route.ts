@@ -33,14 +33,38 @@ export async function PUT(
 export async function DELETE(
     request: NextRequest,
     { params }: { params: Promise<{id: string}>} ) {
+
         const {id} = await params 
         const supabase = await createClient()
+
         const { data: {user}} = await supabase.auth.getUser()
         if (!user)
             return NextResponse.json({error: 'Unauthorized' }, {status: 401})
 
-        // delete this courses files from storage 
 
+        const {data: materials, error: findError} = await supabase
+        .from('materials')
+        .select('file_url')
+        .eq('course_id', id)
+        .eq('user_id', user.id)
+
+        if(findError) {
+          return NextResponse.json({error: findError.message}, {status: 500})
+        }
+        const filePaths: string[] = []
+        for (const material of materials) {
+          if(material.file_url) {
+            filePaths.push(material.file_url)
+          }
+        }
+
+        if(filePaths.length > 0) {
+            const {error: deleteError} = await supabase.storage.from('materials').remove(filePaths)
+            if(deleteError) {
+                return NextResponse.json({error: deleteError.message}, {status: 500})
+            }
+        }
+        
         const {error} = await supabase.from('courses').delete().eq('id', id)
         if(error)
             return NextResponse.json({error: error.message}, {status: 500})
