@@ -33,7 +33,7 @@ export async function POST(request: NextRequest,
 
     const {data: session, error: sessionError} = await supabase
     .from('chat_sessions')
-    .select('id, course_id')
+    .select('id, course_id, title')
     .eq('id', id)
     .eq('user_id', user.id)
     .maybeSingle()
@@ -128,6 +128,13 @@ export async function POST(request: NextRequest,
     if(questionError) {
         console.error('failed to save question', questionError)
         return NextResponse.json({error: 'failed to save question'}, {status: 500})
+    }
+
+    if(!session.title) {
+        const {error: titleError} = await supabase.from('chat_sessions').update({title: question.slice(0, 50)}).eq('id', session.id)
+        if(titleError) {
+            console.error('title update error', titleError)
+        }
     }
 
     let result
