@@ -17,20 +17,20 @@ export function createDeepSeekClient() {
 const MAX_CHARS = 40_000
 const MAX_CHAT_CHARS = 100_000
 
-type SummaryInput = { title: string; materialType: string; text: string }
-type SummaryResult = { summary: string; topics: string[] }
+export type SummaryInput = { title: string; materialType: string; text: string }
+export type SummaryResult = { summary: string; topics: string[] }
 
-type ChatMaterial = { id: string; title: string; text: string }
+export type ChatMaterial = { id: string; title: string; text: string }
 
-type ChatInput = {
+export type ChatInput = {
   course: { name: string; code: string | null }
   materials: ChatMaterial[]
-  upcomingAssignments: { title: string; dueDate: string; status: string }[]
+  upcomingAssignments: { title: string; dueDate: string; status: string | null}[]
   history: { role: 'user' | 'assistant'; content: string }[]
   question: string
 }
 
-type ChatResult = { answer: string; materialIds: string[] }
+export type ChatResult = { answer: string; materialIds: string[] }
 
 export async function summarizeMaterial(input: SummaryInput): Promise<SummaryResult> {
   const client = createDeepSeekClient()
@@ -118,3 +118,4 @@ export async function answerStudyQuestion(input: ChatInput): Promise<ChatResult>
 
   return { answer: parsed.answer, materialIds }
 }
+
