@@ -194,6 +194,7 @@ export default function ChatSessionPage() {
                         )}
                     </div>
                 )}
+                {materials.length ===0} <p className="text-sm text-gray-500">No materials uploaded for this course, answers only use course and assignment info.</p>
                 <form onSubmit={handleSend} className="flex gap-2">
                     <input
                         value={question}
