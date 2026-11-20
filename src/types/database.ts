@@ -769,6 +769,20 @@ export type Database = {
         Args: { p_course_id?: string; p_user_id: string }
         Returns: Json
       }
+      match_material_chunks: {
+        Args: {
+          match_count?: number
+          p_course_id: string
+          query_embedding: string
+        }
+        Returns: {
+          chunk_index: number
+          chunk_text: string
+          id: string
+          material_id: string
+          similarity: number
+        }[]
+      }
       should_send_notification: {
         Args: { assignment_id: string }
         Returns: boolean
