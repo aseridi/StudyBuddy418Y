@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { BookOpen, LayoutDashboard, Menu, X, LogOut, Loader2, Calendar, ChevronDown, FileText } from 'lucide-react';
+import { BookOpen, LayoutDashboard, Menu, X, LogOut, Loader2, Calendar, ChevronDown, FileText, MessageSquare } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -10,7 +10,8 @@ const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { name: 'Courses', href: '/courses', icon: BookOpen },
     { name: 'Assignments', href: '/assignments', icon: FileText },
-    { name: 'Calendar', href:'/calendar', icon: Calendar }
+    { name: 'Calendar', href:'/calendar', icon: Calendar },
+    { name: 'Chat', href:'/chat', icon: MessageSquare}
 ];
 export default function DashboardLayout({ children, }: {
     children: React.ReactNode;
