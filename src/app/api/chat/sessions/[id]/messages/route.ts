@@ -104,30 +104,35 @@ export async function POST(request: NextRequest,
 
 
     const question = body.question.trim()
-
+    const newest = history?.[0]
+    const alreadySaved = newest?.role === 'user' && newest.content === question
 
     const input: ChatInput = {
         course: course  ,
         materials: materials.map((m) => ({id: m.id, title: m.title, text: m.raw_text})),
         upcomingAssignments: upcomingAssignments.map((u) => ({ title: u.title, dueDate: u.due_date, status: u.status})),
-        history: history.reverse().map((h) =>({role: h.role as 'user' | 'assistant', content: h.content}) ),
+        history: (history ?? [])
+            .slice(alreadySaved ? 1 : 0)
+            .reverse()
+            .map((h) => ({ role: h.role as 'user' | 'assistant', content: h.content })),
         question,
     }
 
 
-    
-    const {error: questionError} = await supabase 
-    .from('chat_messages')
-    .insert({
-        session_id: session.id,
-        user_id: user.id,
-        role: 'user',
-        content: question,
-    })
+    if(!alreadySaved) {
+        const {error: questionError} = await supabase 
+        .from('chat_messages')
+        .insert({
+            session_id: session.id,
+            user_id: user.id,
+            role: 'user',
+            content: question,
+        })
 
-    if(questionError) {
-        console.error('failed to save question', questionError)
-        return NextResponse.json({error: 'failed to save question'}, {status: 500})
+        if(questionError) {
+            console.error('failed to save question', questionError)
+            return NextResponse.json({error: 'failed to save question'}, {status: 500})
+        }
     }
 
     if(!session.title) {
@@ -144,6 +149,7 @@ export async function POST(request: NextRequest,
         console.error('AI chat failed', err)
         return NextResponse.json({error: 'the study assistant failed to answer the question, please try again'}, { status: 500})
     }
+    
 
     const {data: message, error: answerError} = await supabase
     .from('chat_messages')

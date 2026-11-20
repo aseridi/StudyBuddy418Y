@@ -25,6 +25,7 @@ export default function ChatSessionPage() {
     const [question, setQuestion] = useState('')
     const [sending, setSending] = useState(false)
     const [sendError, setSendError] = useState('')
+    const [failedQuestion, setFailedQuestion] = useState('')
     const {id} = useParams<{id: string}>()
 
     useEffect(()=> {
@@ -82,41 +83,51 @@ export default function ChatSessionPage() {
     }, [id])
 
 
-    async function handleSend(event: React.FormEvent<HTMLFormElement>) {
-        event.preventDefault()
-
-        const text = question.trim()
-        if(!text) return
-        
-        const tempMessage: Message = {
-            id: `temp-${Date.now()}`,
-            role: 'user',
-            content: text,
-            referenced_materials: null,
-            created_at: null,
+    async function sendQuestion(text: string, isRetry: boolean) {
+        if (!isRetry) {
+            const tempMessage: Message = {
+                id: `temp-${Date.now()}`,
+                role: 'user',
+                content: text,
+                referenced_materials: null,
+                created_at: null,
+            }
+            setMessages((prev) => [...prev, tempMessage])
         }
-        setMessages((prev) => [...prev, tempMessage])
 
-        setQuestion('')
         setSendError('')
+        setFailedQuestion('')
         setSending(true)
 
         try {
             const res = await fetch(`/api/chat/sessions/${id}/messages`, {
                 method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({question: text}),
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ question: text }),
             })
             const data = await res.json()
-            if(!res.ok) {
-                setSendError(data.error ?? 'The assistant could not answer, your question is saved')
+
+            if (!res.ok) {
+                setSendError(data.error ?? 'The assistant could not answer. Your question is saved.')
+                setFailedQuestion(text)
                 return
             }
-
             setMessages((prev) => [...prev, data.message])
+        } catch (err) {
+            console.error('send failed', err)
+            setSendError('Could not reach the assistant.')
+            setFailedQuestion(text)
         } finally {
             setSending(false)
         }
+    }
+
+    async function handleSend(e: React.FormEvent<HTMLFormElement>) {
+        e.preventDefault()
+        const text = question.trim()
+        if (!text) return
+        setQuestion('')
+        await sendQuestion(text, false)
     }
 
 
@@ -172,7 +183,17 @@ export default function ChatSessionPage() {
                 {sending && (
                     <div className="mr-auto rounded-lg border p-3 text-gray-500">Thinking...</div>
                 )}
-                {sendError && <p className="text-sm text-red-600">{sendError}</p>}
+                {sendError && (
+                    <div className="flex items-center gap-3 text-sm text-red-600">
+                        <p>{sendError}</p>
+                        {failedQuestion && (
+                            <Button variant="outline" size="sm" disabled={sending}
+                                onClick={() => sendQuestion(failedQuestion, true)}>
+                                Retry
+                            </Button>
+                        )}
+                    </div>
+                )}
                 <form onSubmit={handleSend} className="flex gap-2">
                     <input
                         value={question}
