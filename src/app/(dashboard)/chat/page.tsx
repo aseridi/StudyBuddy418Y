@@ -8,6 +8,12 @@ import {Button} from '@/components/ui/Button'
 
 
 type CourseOption = Pick<Tables<'courses'>, 'id' | 'name' | 'code'>
+type ChatSessionItem = {
+    id: string
+    title: string | null
+    created_at: string | null 
+    courses : {name: string} | null 
+}
 
 export default function ChatPage() {
     const [courses, setCourses] = useState<CourseOption[]>([])
@@ -17,10 +23,14 @@ export default function ChatPage() {
     const router = useRouter()
     const [creating, setCreating] = useState(false)
     const [createError, setCreateError] = useState('')
+    const [sessions, setSessions] = useState<ChatSessionItem[]>([])
 
     useEffect(()=> {
         async function load() {
-            const {data, error} = await createClient()
+            
+            const supabase = createClient()
+
+            const {data, error} = await supabase
             .from('courses')
             .select('id, name, code')
             .order('created_at', {ascending: false})
@@ -31,6 +41,20 @@ export default function ChatPage() {
                 return
             }
             setCourses(data)
+            setLoading(false)
+
+            const { data: sessionData, error: sessionError } = await supabase
+            .from('chat_sessions')
+            .select('id, title, created_at, courses(name)')
+            .order('created_at', { ascending: false })
+
+            if(sessionError) {
+                setError(sessionError.message)
+                setLoading(false)
+                return
+            }
+
+            setSessions(sessionData ?? [])
             setLoading(false)
         }
         load()
@@ -82,6 +106,18 @@ export default function ChatPage() {
                 </select>
                 <Button onClick={handleNewChat} isLoading={creating} disabled={!courseId}>New Chat</Button>
                 {createError && <p>{createError}</p>}
+                <h2>Past chats</h2>
+                {sessions.length === 0 ? (
+                    <p>No chats yet</p>
+                ) : (
+                    <ul>
+                        {sessions.map((s) => (
+                            <li key={s.id}>
+                                <Link href={`/chat/${s.id}`}>{s.title ?? 'Untitled chat'}{s.courses ? ` · ${s.courses.name}` : ''}</Link>
+                            </li>
+                        ))}
+                    </ul>
+                )}
         </div>
     )
 
