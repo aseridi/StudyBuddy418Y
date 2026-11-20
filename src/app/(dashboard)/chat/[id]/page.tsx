@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { Tables } from '@/types/database'
 import Link from 'next/link'
-
+import { Button } from '@/components/ui/Button'
 
 
 type ChatSession = Pick<Tables<'chat_sessions'>, 'id' | 'title' | 'course_id'>  & {
@@ -22,6 +22,9 @@ export default function ChatSessionPage() {
     const [session, setSession] = useState<ChatSession | null>(null)
     const [messages, setMessages] = useState<Message[]>([])
     const [materials, setMaterials] = useState<Material[]>([])
+    const [question, setQuestion] = useState('')
+    const [sending, setSending] = useState(false)
+    const [sendError, setSendError] = useState('')
     const {id} = useParams<{id: string}>()
 
     useEffect(()=> {
@@ -78,6 +81,45 @@ export default function ChatSessionPage() {
         load()
     }, [id])
 
+
+    async function handleSend(event: React.FormEvent<HTMLFormElement>) {
+        event.preventDefault()
+
+        const text = question.trim()
+        if(!text) return
+        
+        const tempMessage: Message = {
+            id: `temp-${Date.now()}`,
+            role: 'user',
+            content: text,
+            referenced_materials: null,
+            created_at: null,
+        }
+        setMessages((prev) => [...prev, tempMessage])
+
+        setQuestion('')
+        setSendError('')
+        setSending(true)
+
+        try {
+            const res = await fetch(`/api/chat/sessions/${id}/messages`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({question: text}),
+            })
+            const data = await res.json()
+            if(!res.ok) {
+                setSendError(data.error ?? 'The assistant could not answer, your question is saved')
+                return
+            }
+
+            setMessages((prev) => [...prev, data.message])
+        } finally {
+            setSending(false)
+        }
+    }
+
+
     if(loading) return <p>Loading ...</p>
     if(error) return <p> Error: {error}</p>
 
@@ -127,6 +169,20 @@ export default function ChatSessionPage() {
                         </div>
                     )
                 })}
+                {sending && (
+                    <div className="mr-auto rounded-lg border p-3 text-gray-500">Thinking...</div>
+                )}
+                {sendError && <p className="text-sm text-red-600">{sendError}</p>}
+                <form onSubmit={handleSend} className="flex gap-2">
+                    <input
+                        value={question}
+                        onChange={(e) => setQuestion(e.target.value)}
+                        placeholder='Ask a question'
+                        maxLength={2000}
+                        className="flex-1 rounded-lg border px-3 py-2"
+                        />
+                        <Button type="submit" isLoading={sending}>Send</Button>
+                </form>
             </div>
         </div>
     )

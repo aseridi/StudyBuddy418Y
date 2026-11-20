@@ -59,9 +59,15 @@ export async function summarizeMaterial(input: SummaryInput): Promise<SummaryRes
   const content = completion.choices[0]?.message.content
   if (!content) throw new Error('Empty response from DeepSeek')
 
-  const parsed = JSON.parse(content)
-  if (typeof parsed.summary !== 'string' || !Array.isArray(parsed.topics)) {
-    throw new Error('Unexpected response shape from DeepSeek')
+  let parsed
+  try {
+    parsed = JSON.parse(content)
+  } catch {
+    console.error('DeepSeek returned invald JSON', {
+      finishReson: completion.choices[0]?.finish_reason,
+      content,
+    })
+    throw new Error('DeepSeek returned invalid JSON')
   }
 
   return { summary: parsed.summary, topics: parsed.topics.map(String) }
@@ -81,7 +87,7 @@ export async function answerStudyQuestion(input: ChatInput): Promise<ChatResult>
 
   const system = `You are a study assistant for the course ${input.course.name} ${input.course.code ?? ''}.
       Rules:
-      - Answer the student's question using the course materials below.
+      - Answer the student's question using the course materials below. Keep the answers concise, at most about 300 words unless asked for more detail.
       - If the materials do not cover the question, say so, then give a general answer and label it clearly as general knowledge.
       - Reply with JSON only: {"answer": string, "materialIds": string[]}
       - materialIds are the ids of the materials your answer used, or [] if none.
@@ -93,7 +99,7 @@ export async function answerStudyQuestion(input: ChatInput): Promise<ChatResult>
   const completion = await client.chat.completions.create({
     model: MODELS.fast,
     response_format: { type: 'json_object' },
-    max_tokens: 1000,
+    max_tokens: 3000,
     // @ts-expect-error DeepSeek-only param, not in the openai SDK types
     thinking: { type: 'disabled' },
     messages: [
