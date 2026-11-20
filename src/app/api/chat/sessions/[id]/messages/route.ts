@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient }  from '@/lib/supabase/server'
 import { isUuid } from '@/lib/utils'
 import { answerStudyQuestion, ChatInput } from '@/lib/ai/deepseek'
+import { embedTexts } from '@/lib/ai/embeddings'
 
 const MAX_Q_CHARS = 2000
 export async function POST(request: NextRequest,
@@ -49,12 +50,32 @@ export async function POST(request: NextRequest,
         return NextResponse.json({error: `this chat's course was deleted`}, {status: 409})
     }
 
+    const question = body.question.trim()
+
+    let questionVector: number[]
+    try {
+        ;[questionVector] = await embedTexts([question], 'RETRIEVAL_QUERY')
+    } catch(error){
+        console.error('failed to embed question', error)
+        return NextResponse.json({error: 'failed to embed question'}, {status: 500})
+    }
+    const {data: chunks, error: chunkError} = await supabase.rpc('match_material_chunks', {
+        query_embedding: JSON.stringify(questionVector),
+        p_course_id: session.course_id,
+        match_count: 6,
+    })
+
+    if(chunkError) {
+        console.error('failed to load chunks', chunkError)
+        return NextResponse.json({error: 'failed to load chunks'}, {status: 500})
+    }
+
+
 
     const {data: materials, error: matError } = await supabase
     .from('materials')
-    .select('id, title, raw_text')
+    .select('id, title')
     .eq('course_id', session.course_id)
-    .not('raw_text', 'is', null)
 
     if(matError) {
         console.error('error loading materials', matError)
@@ -103,13 +124,16 @@ export async function POST(request: NextRequest,
     }
 
 
-    const question = body.question.trim()
+    
     const newest = history?.[0]
     const alreadySaved = newest?.role === 'user' && newest.content === question
 
     const input: ChatInput = {
         course: course  ,
-        materials: materials.map((m) => ({id: m.id, title: m.title, text: m.raw_text})),
+        materials: chunks.map((c) => ({
+            id: c.material_id,
+            title: materials.find((m) => m.id===c.material_id)?.title ?? 'Untitled',
+            text: c.chunk_text})),
         upcomingAssignments: upcomingAssignments.map((u) => ({ title: u.title, dueDate: u.due_date, status: u.status})),
         history: (history ?? [])
             .slice(alreadySaved ? 1 : 0)
