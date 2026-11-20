@@ -2,6 +2,7 @@ import { NextRequest, NextResponse} from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import {extractMaterialText} from '@/lib/files/extract-text'
 import {MATERIAL_TYPES} from '@/lib/materials'
+import { embedMaterialText } from '@/lib/ai/embeddings'
 
 const ALLOWED_TYPES: Record<string, string> ={
     'application/pdf': 'pdf',
@@ -117,6 +118,23 @@ export async function POST(request: NextRequest) {
         console.error('insert error', insertError)
         await supabase.storage.from('materials').remove([filePath])
         return NextResponse.json({error: 'unable to add file'}, {status: 500})
+    }
+
+    if(rawText) {
+        try {
+            const chunks = await embedMaterialText(rawText)
+            if(chunks.length > 0){
+                const {error: embedError} = await supabase
+                .from('material_embeddings')
+                .insert(chunks.map((c) => ({...c, material_id: material.id, course_id: courseId})))
+
+                if(embedError) {
+                    console.error('upload saving embeddings failed', embedError)
+                }
+            }
+        } catch(error) {
+            console.error('upload embedding failed', error)
+        }
     }
 
 

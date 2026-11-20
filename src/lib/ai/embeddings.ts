@@ -1,6 +1,7 @@
 // heavily relied on AI for this one.
 
 import { EMBEDDING_MODEL } from './models'
+import { chunkText } from './chunk'
 
 export const EMBEDDING_DIMENSION = 1536
 const BATCH_SIZE = 50
@@ -63,4 +64,20 @@ export async function embedTexts(texts: string[], taskType: TaskType): Promise<n
   }
 
   return results
+}
+
+export async function embedMaterialText( text: string
+):Promise<{chunk_index: number; chunk_text: string; embedding: string}[]> {
+
+  const chunks = chunkText(text)
+  if(chunks.length ===0) return []
+
+  const vectors = await embedTexts(chunks, 'RETRIEVAL_DOCUMENT')
+
+  return chunks.map((chunk, i) => ({
+    chunk_index: i,
+    chunk_text: chunk,
+    embedding: JSON.stringify(vectors[i])
+  }))
+  
 }
