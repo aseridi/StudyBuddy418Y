@@ -36,6 +36,7 @@ export async function PUT(
         title: body.title,
         course_id: body.courseId,
         due_date: body.dueDate,
+        priority: body.priority,
         })
         .eq('id', id)
         .select()
