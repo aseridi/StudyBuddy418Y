@@ -173,6 +173,10 @@ export async function POST(request: NextRequest,
         console.error('AI chat failed', err)
         return NextResponse.json({error: 'the study assistant failed to answer the question, please try again'}, { status: 500})
     }
+
+    const passages = chunks
+    .filter((c) => result.materialIds.includes(c.material_id))
+    .map((c) => ({materialId: c.material_id, text: c.chunk_text.slice(0,200)}))
     
 
     const {data: message, error: answerError} = await supabase
@@ -182,7 +186,8 @@ export async function POST(request: NextRequest,
         user_id: user.id,
         role: 'assistant',
         content: result.answer,
-        referenced_materials: result.materialIds
+        referenced_materials: result.materialIds,
+        injected_context: {passages}
     })
     .select()
     .single()
