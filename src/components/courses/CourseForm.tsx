@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { Input } from '@/components/ui/Input';
 import {Tables} from '@/types/database'
 import { ArrowLeft } from 'lucide-react'
-import { url } from 'inspector';
 
 
 
