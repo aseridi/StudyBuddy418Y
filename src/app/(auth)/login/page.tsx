@@ -32,31 +32,45 @@ function LoginForm() {
         window.location.href = redirectTo 
     }
     return (
-    <div className="w-full max-w-md bg-white rounded-2xl shadow-xl border p-8 space-y-4">
-      <h1>Log in</h1>
-      <form onSubmit={handleSubmit}>
+    <div className="w-full max-w-md space-y-6 rounded-2xl border border-gray-200 bg-white p-8 shadow-xl">
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900">Log in</h1>
+        <p className="mt-1 text-sm text-gray-500">Welcome back to StudyBuddy.</p>
+      </div>
+      <form onSubmit={handleSubmit} className="space-y-4">
         <Input
+          id="email"
+          label="Email"
           type="email"
-          placeholder="Email"
+          autoComplete="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
         />
-        <Input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
-        <Link href="/reset-password" className="text-sm text-blue-600 hover:underline">Forgot Password?</Link>
-        {error && <p>{error}</p>}
-        <Button type="submit" disabled={loading}>
-          {loading ? 'Logging in…' : 'Log in'}
-        </Button>
+        <div className="space-y-1">
+          <Input
+            id="password"
+            label="Password"
+            type="password"
+            autoComplete="current-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+          <div className="text-right">
+            <Link href="/reset-password" className="text-sm font-medium text-blue-600 hover:underline">Forgot password?</Link>
+          </div>
+        </div>
+        {error && (
+          <p className="flex items-start gap-2 rounded-lg bg-red-50 p-3 text-sm text-red-700">
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />{error}
+          </p>
+        )}
+        <Button type="submit" isLoading={loading} className="w-full">Log in</Button>
       </form>
-      <p className ="text-sm text-gray-600"> Don&apos;t have an account?{' '}
-        <Link href="/signup" className="text-blue-600 hover:underline">Sign Up</Link>
+      <p className="text-center text-sm text-gray-600">
+        Don&apos;t have an account?{' '}
+        <Link href="/signup" className="font-medium text-blue-600 hover:underline">Sign up</Link>
       </p>
     </div>
   )
