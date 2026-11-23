@@ -5,7 +5,6 @@ import { useEffect, useState } from 'react'
 import type {Tables} from '@/types/database'
 import { AssignmentForm } from '@/components/assignments/AssignmentForm'
 import { createClient } from '@/lib/supabase/client'
-import Link from 'next/link'
 
 export default function AssignmentDetailPage() {
 

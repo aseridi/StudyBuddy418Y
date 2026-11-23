@@ -3,9 +3,8 @@
 import { useState, useEffect } from "react"
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/Button'
-import Link from 'next/link'
-import { startOfWeek, addDays, isSameDay } from "@/lib/calendar"
-import type { Tables } from '@/types/database'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { startOfWeek, addDays } from "@/lib/calendar"
 import { CalendarAssignment } from "@/components/calendar/WeekView"
 import { WeekView } from "@/components/calendar/WeekView"
 
@@ -39,19 +38,36 @@ export default function CalendarPage() {
     }, [weekStart])
 
     return (
-        <div>
-            <h1>Calendar</h1>
-            <div className="flex items-center gap-3">
-                <Button variant="outline" onClick={() => setWeekStart(addDays(weekStart, -7))}>‹</Button>
-                <span>
-                    {weekStart.toLocaleDateString()} – {addDays(weekStart, 6).toLocaleDateString()}
-                </span>
-                <Button variant="outline" onClick={() => setWeekStart(addDays(weekStart, 7))}>›</Button>
-            </div>          
-            {loading ? <p>Loading ....</p>
-            :error ? <p> Error: {error}</p>
-            :assignments.length ===0? <p>No deadlines this week.</p>
-            :<WeekView weekStart={weekStart} assignments={assignments}/>} 
+        <div className="mx-auto max-w-6xl space-y-6">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <h1 className="text-2xl font-bold text-gray-900">Calendar</h1>
+                <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm" aria-label="Previous week" onClick={() => setWeekStart(addDays(weekStart, -7))}>
+                        <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                    <span className="min-w-44 text-center text-sm font-medium text-gray-700">
+                        {weekStart.toLocaleDateString([], { month: 'short', day: 'numeric' })} – {addDays(weekStart, 6).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}
+                    </span>
+                    <Button variant="outline" size="sm" aria-label="Next week" onClick={() => setWeekStart(addDays(weekStart, 7))}>
+                        <ChevronRight className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => setWeekStart(startOfWeek(new Date()))}>
+                        Today
+                    </Button>
+                </div>
+            </div>
+
+            {loading ? (
+                <p className="text-gray-500">Loading deadlines...</p>
+            ) : error ? (
+                <p className="rounded-lg bg-red-50 p-4 text-red-700">Error: {error}</p>
+            ) : assignments.length === 0 ? (
+                <div className="rounded-xl border-2 border-dashed border-gray-300 bg-white p-12 text-center">
+                    <p className="text-gray-600">No deadlines this week.</p>
+                </div>
+            ) : (
+                <WeekView weekStart={weekStart} assignments={assignments} />
+            )}
         </div>
     )
 }

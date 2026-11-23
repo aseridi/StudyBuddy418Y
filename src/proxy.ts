@@ -1,6 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { updateSession } from '@/lib/supabase/middleware'
-import path from "path";
 
 const protectedRoutes = ['/dashboard', '/update-password', '/courses', '/assignments', '/calendar', '/materials', '/chat']
 const authRoutes = ['/login', '/signup', '/reset-password']
