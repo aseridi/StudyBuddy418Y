@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { isPriority } from '@/lib/assignment-priority'
 
 export async function PUT(
     request: NextRequest,
@@ -13,6 +14,10 @@ export async function PUT(
     const body = await request.json()
     if (!body.title?.trim() || !body.dueDate || !body.courseId) {
         return NextResponse.json({ error: 'Assignment Title, due Date, and ID are required' }, { status: 400 })
+    }
+
+    if(!isPriority(body.priority)) {
+        return NextResponse.json({error: 'assignment priority has to be: low, medium, or high'}, {status: 400})
     }
 
     const {data: course} = await supabase
