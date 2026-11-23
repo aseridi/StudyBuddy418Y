@@ -18,7 +18,7 @@ export default function CourseDetailPage() {
   const [loading, setLoading] = useState(true)
   const { id } = useParams<{ id: string }>()
   const [showUpload, setShowUpload] = useState(false)
-
+  
 
   useEffect(() => {
     async function loadCourse() {
@@ -43,6 +43,7 @@ export default function CourseDetailPage() {
 
   if (loading) return <p>Loading ...</p>
   if (error || !course) return <p>Course not found</p>
+  const isActive = course.is_active !== false
 
   async function handleDelete() {
     if (!confirm(`Delete "${course!.name}"? This also deletes its assignments and materials.`)) return
@@ -54,15 +55,34 @@ export default function CourseDetailPage() {
     window.location.href = '/courses'
   }
 
+   async function handleArchive() {
+      if (!confirm(`${isActive ? 'Archive' : 'Unarchive'} "${course!.name}"?`)) return
+      const res = await fetch(`/api/courses/${id}`, {
+      method: 'PATCH',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({isActive: !isActive})
+    })
+
+    if(!res.ok) {
+      alert('could not update course')
+      return
+    }
+
+    setCourse((prev) => prev && {...prev, is_active: !isActive})
+  }
+
   function handleUploaded(material: Tables<'materials'>) {
     setShowUpload(false)
     setCourse((prev) => prev && {...prev, materials: [material, ...prev.materials]})
   }
 
+ 
+
   return (
     <div>
       <Link href="/courses">Back to courses</Link>
       <h1>{course.name}</h1>
+      {!isActive && <p>Archived</p>}
       {course.code && <p>Code: {course.code}</p>}
       {course.professor && <p>Professor: {course.professor}</p>}
       {course.description && <p>{course.description}</p>}
@@ -95,6 +115,7 @@ export default function CourseDetailPage() {
       )}
       <Link href={`/courses/${id}/edit`}>Edit</Link>
       <Button variant="danger" onClick={handleDelete}>Delete course</Button>
+      <Button variant='outline' onClick={handleArchive}> {isActive? 'Archive course': 'Unarchive course'}</Button>
     </div>
   )
 }
