@@ -7,7 +7,7 @@ import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import { Button } from '@/components/ui/Button'
 import { UploadMaterialForm } from '@/components/materials/UploadMaterialForm'
-import { ArrowLeft, Pencil, Trash2, Upload } from 'lucide-react'
+import { ArrowLeft, Archive, ArchiveRestore, Pencil, Trash2, Upload } from 'lucide-react'
 import { getStatusStyle } from '@/lib/assignment-status'
 
 type MaterialItem = Pick<Tables<'materials'>, 'id' | 'title' | 'material_type' | 'is_processed' | 'processing_error' | 'created_at'>
@@ -21,7 +21,7 @@ export default function CourseDetailPage() {
   const [loading, setLoading] = useState(true)
   const { id } = useParams<{ id: string }>()
   const [showUpload, setShowUpload] = useState(false)
-
+  
 
   useEffect(() => {
     async function loadCourse() {
@@ -46,6 +46,7 @@ export default function CourseDetailPage() {
 
   if (loading) return <p className="text-gray-500">Loading course...</p>
   if (error || !course) return <p className="rounded-lg bg-red-50 p-4 text-red-700">Course not found</p>
+  const isActive = course.is_active !== false
 
   async function handleDelete() {
     if (!confirm(`Delete "${course!.name}"? This also deletes its assignments and materials.`)) return
@@ -55,6 +56,22 @@ export default function CourseDetailPage() {
       return
     }
     window.location.href = '/courses'
+  }
+
+   async function handleArchive() {
+      if (!confirm(`${isActive ? 'Archive' : 'Unarchive'} "${course!.name}"?`)) return
+      const res = await fetch(`/api/courses/${id}`, {
+      method: 'PATCH',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({isActive: !isActive})
+    })
+
+    if(!res.ok) {
+      alert('could not update course')
+      return
+    }
+
+    setCourse((prev) => prev && {...prev, is_active: !isActive})
   }
 
   function handleUploaded(material: Tables<'materials'>) {
@@ -77,6 +94,9 @@ export default function CourseDetailPage() {
               <p className="text-xs font-medium uppercase tracking-wide text-gray-500">{course.code}</p>
             )}
             <h1 className="mt-1 text-2xl font-bold text-gray-900">{course.name}</h1>
+            {!isActive && (
+              <span className="mt-2 inline-block rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-700">Archived</span>
+            )}
             {course.professor && <p className="mt-1 text-gray-600">{course.professor}</p>}
             {course.description && <p className="mt-3 max-w-2xl text-sm text-gray-700">{course.description}</p>}
           </div>
@@ -87,6 +107,9 @@ export default function CourseDetailPage() {
             >
               <Pencil className="h-4 w-4" /> Edit
             </Link>
+            <Button variant="outline" onClick={handleArchive} leftIcon={isActive ? <Archive className="h-4 w-4" /> : <ArchiveRestore className="h-4 w-4" />}>
+              {isActive ? 'Archive' : 'Unarchive'}
+            </Button>
             <Button variant="danger" onClick={handleDelete} leftIcon={<Trash2 className="h-4 w-4" />}>
               Delete
             </Button>

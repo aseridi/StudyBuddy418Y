@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/client'
 import type { Tables } from '@/types/database'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
+import { assignmentPriorities } from '@/lib/assignment-priority'
 
 type Props = { assignment?: Tables<'assignments'> }
 
@@ -15,6 +16,7 @@ function toLocalInput(iso: string) {
 
 export function AssignmentForm({ assignment }: Props) {
   const [title, setTitle] = useState(assignment?.title ?? '')
+  const [priority, setPriority] = useState(assignment?.priority ?? 'medium')
   const [courseId, setCourseId] = useState(assignment?.course_id ?? '')
   const [dueDate, setDueDate] = useState(assignment ? toLocalInput(assignment.due_date) : '')
 
@@ -39,7 +41,7 @@ export function AssignmentForm({ assignment }: Props) {
     const res = await fetch(url, {
       method,
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title, courseId, dueDate: new Date(dueDate).toISOString() }),
+      body: JSON.stringify({ title, courseId, priority, dueDate: new Date(dueDate).toISOString() }),
     })
     
     const json = await res.json()
@@ -76,6 +78,11 @@ export function AssignmentForm({ assignment }: Props) {
           onChange={(e) => setDueDate(e.target.value)}
           required
         />
+        <select value ={priority} onChange={(e) => setPriority(e.target.value)} required>
+          {assignmentPriorities.map((p) => (
+            <option key={p} value ={p}>{p}</option>
+          ))}
+        </select>
 
         {error && <p>{error}</p>}
         <Button type="submit" isLoading={loading}>

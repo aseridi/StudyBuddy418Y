@@ -3,6 +3,7 @@ import {useEffect, useState} from 'react'
 import {createClient } from '@/lib/supabase/client'
 import type {Tables} from '@/types/database'
 import Link from 'next/link'
+import { Button } from '@/components/ui/Button'
 
 
 
@@ -10,6 +11,8 @@ export default function CoursePage() {
     const [courses, setCourses] = useState<Tables<'courses'>[]>([])
     const [error, setError] = useState('')
     const [loading, setLoading] = useState(true)
+    const [showArchived, setShowArchived] = useState(false)
+
     useEffect(()=> {
         async function load() {
             const {data, error} = await createClient()
@@ -28,19 +31,26 @@ export default function CoursePage() {
         load()
     }, [])
 
-        if (loading) return <p className="text-gray-500">Loading courses...</p>
+    if (loading) return <p className="text-gray-500">Loading courses...</p>
     if (error) return <p className="rounded-lg bg-red-50 p-4 text-red-700">Error: {error}</p>
+
+    const visibleCourses = courses.filter((c) => showArchived ? c.is_active === false : c.is_active !== false)
 
     return (
         <div className="mx-auto max-w-5xl">
             <div className="mb-6 flex items-center justify-between">
                 <h1 className="text-2xl font-bold text-gray-900">Courses</h1>
-                <Link
-                    href="/courses/new"
-                    className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-                >
-                    + Add course
-                </Link>
+                <div className="flex items-center gap-2">
+                    <Button variant="outline" onClick={() => setShowArchived(!showArchived)}>
+                        {showArchived ? 'Show active' : 'Show archived'}
+                    </Button>
+                    <Link
+                        href="/courses/new"
+                        className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                    >
+                        + Add course
+                    </Link>
+                </div>
             </div>
 
             {courses.length === 0 ? (
@@ -50,9 +60,13 @@ export default function CoursePage() {
                         Add your first course
                     </Link>
                 </div>
+            ) : visibleCourses.length === 0 ? (
+                <div className="rounded-xl border-2 border-dashed border-gray-300 bg-white p-12 text-center">
+                    <p className="text-gray-600">{showArchived ? 'No archived courses.' : 'No active courses.'}</p>
+                </div>
             ) : (
                 <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    {courses.map((course) => (
+                    {visibleCourses.map((course) => (
                         <li key={course.id}>
                             <Link
                                 href={`/courses/${course.id}`}
