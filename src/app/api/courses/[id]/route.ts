@@ -1,4 +1,4 @@
-import { NextResponse, type NextRequest } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
 export async function PUT(
@@ -71,3 +71,39 @@ export async function DELETE(
 
         return NextResponse.json({message: 'Course Deleted'})
     }
+
+export async function PATCH (
+  request: NextRequest,
+  {params}: {params: Promise<{id: string}>}
+) {
+  const {id} = await params
+  const supabase = await createClient()
+  const {data:{user}} = await supabase.auth.getUser()
+  if(!user)
+    return NextResponse.json({error: 'Unauthorized'}, {status:401})
+
+  let body
+  try {
+    body = await request.json()
+  } catch {
+    return NextResponse.json({error: 'invalid json'}, {status: 400})
+  }
+  
+  if(typeof body.isActive !== 'boolean') {
+    return NextResponse.json({error: 'isActive must be true or false'}, {status: 400})
+  }
+
+  const {data: course, error} = await supabase
+  .from('courses')
+  .update({
+    is_active: body.isActive,
+  })
+  .eq('id', id)
+  .eq('user_id', user.id)
+  .select()
+  .single()
+
+  if(error) return NextResponse.json({error: 'course not found'}, {status: 404})
+
+  return NextResponse.json({course})
+}
