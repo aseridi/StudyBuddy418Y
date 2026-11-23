@@ -11,9 +11,18 @@ import { ArrowLeft, Send } from 'lucide-react'
 type ChatSession = Pick<Tables<'chat_sessions'>, 'id' | 'title' | 'course_id'>  & {
     courses: { name: string, code: string | null } | null
 }
-type Message = Pick<Tables<'chat_messages'>, 'id' | 'role' | 'content' | 'referenced_materials' | 'created_at'>
+type Message = Pick<Tables<'chat_messages'>, 'id' | 'role' | 'content' | 'referenced_materials' | 'created_at' |'injected_context'>
 type Material = Pick<Tables<'materials'> , 'id' | 'title'>
 
+type Passage = {materialId: string; text: string}
+function getPassages(context: unknown): Passage[] {
+    if(!context || typeof context != 'object' || !('passages' in context)) return []
+    const list = (context as {passages: unknown}).passages
+    if(!Array.isArray(list)) return []
+    return list.filter(
+        (p): p is Passage => typeof p?.materialId ==='string' && typeof p?.text === 'string'
+    )
+}
 
 
 export default function ChatSessionPage() {
@@ -53,7 +62,7 @@ export default function ChatSessionPage() {
 
             const {data: messageData, error: messageError} = await createClient()
             .from('chat_messages')
-            .select('id, role, content, referenced_materials, created_at')
+            .select('id, role, content, referenced_materials, created_at, injected_context')
             .eq('session_id', id)
             .order('created_at', {ascending: true})
 
@@ -92,6 +101,7 @@ export default function ChatSessionPage() {
                 content: text,
                 referenced_materials: null,
                 created_at: null,
+                injected_context: null,
             }
             setMessages((prev) => [...prev, tempMessage])
         }
@@ -161,6 +171,8 @@ export default function ChatSessionPage() {
                             .map((matId) => materials.find((mat) => mat.id === matId))
                             .filter((mat) => mat !== undefined)
 
+                        const passages = getPassages(m.injected_context)
+
                         return (
                             <div
                                 key={m.id}
@@ -171,17 +183,22 @@ export default function ChatSessionPage() {
                                 <p className="whitespace-pre-wrap">{m.content}</p>
 
                                 {m.role === 'assistant' && sources.length > 0 && (
-                                    <p className="mt-2 border-t border-gray-200 pt-2 text-xs text-gray-500">
-                                        <span className="font-medium">Sources: </span>
-                                        {sources.map((mat, i) => (
-                                            <span key={mat.id}>
-                                                {i > 0 && ', '}
-                                                <Link href={`/materials/${mat.id}`} className="text-blue-600 hover:underline">
-                                                    {mat.title}
-                                                </Link>
-                                            </span>
-                                        ))}
-                                    </p>
+                                    <div className="mt-2 space-y-2 border-t border-gray-200 pt-2 text-xs text-gray-500">
+                                        <p className="font-medium">Sources:</p>
+                                        {sources.map((mat) => {
+                                            const passage = passages.find((p) => p.materialId === mat.id)
+                                            return (
+                                                <div key={mat.id}>
+                                                    <Link href={`/materials/${mat.id}`} className="text-blue-600 hover:underline">
+                                                        {mat.title}
+                                                    </Link>
+                                                    {passage && (
+                                                        <span className="mt-1 block italic text-gray-500">&ldquo;{passage.text}&hellip;&rdquo;</span>
+                                                    )}
+                                                </div>
+                                            )
+                                        })}
+                                    </div>
                                 )}
                             </div>
                         )
